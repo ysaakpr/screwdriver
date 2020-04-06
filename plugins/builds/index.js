@@ -612,8 +612,15 @@ async function getParentBuildStatus({ newBuild, joinListNames, pipelineId, build
  */
 async function handleNewBuild({ done, hasFailure, newBuild }) {
     if (done) {
+        console.log('---------done with build-----------');
         // Delete new build since previous build failed
         if (hasFailure) {
+            console.log('---------hasFailure-----------', newBuild);
+            console.log('------------------------------');
+            logger.info(
+                `Failure occurred in upstream job, removing new build - build:${newBuild.id}` +
+                    ` event:${newBuild.eventId} `
+            );
             await newBuild.remove();
 
             return null;
@@ -965,6 +972,8 @@ exports.register = (server, options, next) => {
 
             return obj;
         }, {});
+
+        console.log('-----currentJobName: ', currentJobName);
 
         /* OLD FLOW
          * Use if external join flag is false
