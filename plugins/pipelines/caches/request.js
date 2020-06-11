@@ -42,7 +42,8 @@ async function invoke(request) {
     };
 
     if (cache.strategy === 'disk') {
-        const buildClusters = await request.server.app.buildClusterFactory.list();
+        const clusters = await request.server.app.buildClusterFactory.list();
+        const buildClusters = clusters.map(cluster => cluster.name);
 
         Object.assign(options, {
             method: 'POST',
