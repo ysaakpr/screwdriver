@@ -144,7 +144,7 @@ module.exports = config => ({
         notes: 'Returns the logs for a step',
         tags: ['api', 'builds', 'steps', 'log'],
         auth: {
-            strategies: ['token'],
+            strategies: ['session', 'token'],
             scope: ['user', 'pipeline', 'build']
         },
         plugins: {
@@ -175,7 +175,7 @@ module.exports = config => ({
                     const isDone = stepModel.code !== undefined;
                     const baseUrl = `${config.ecosystem.store}/v1/builds/${buildId}/${stepName}/log`;
                     const authToken = headers.authorization;
-                    const { sort } = req.query;
+                    const { sort, type } = req.query;
                     const pagesToLoad = req.query.pages;
                     const linesFrom = req.query.from;
 
@@ -191,9 +191,19 @@ module.exports = config => ({
                                 maxLines
                             })
                         )
-                        .then(([lines, morePages]) =>
-                            reply(lines).header('X-More-Data', (morePages || !isDone).toString())
-                        );
+                        .then(([lines, morePages]) =>{
+                            if (type !== 'download') {
+                                return reply(lines).header('X-More-Data', (morePages || !isDone).toString());
+                            }
+
+                            let res = '';
+
+                            for (let i = 0; i < lines.length; i += 1) {
+                                res = res + lines[i].m + '\n';
+                            }
+
+                            return reply(res).type('text/plain').header('content-disposition',`attachment; filename="${stepName}-log.txt"`);
+                        });
                 })
                 .catch(err => reply(boom.boomify(err)));
         },
